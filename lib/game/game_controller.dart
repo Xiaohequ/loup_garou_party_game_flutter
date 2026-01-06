@@ -42,6 +42,12 @@ class GameController {
       case GamePhase.rolesDistribution:
         _startNight();
         break;
+      case GamePhase.day:
+      case GamePhase.vote:
+      case GamePhase.voteResult:
+      case GamePhase.defenseSpeech:
+        _endDay(null);
+        break;
       case GamePhase.night:
         _nextNightTurn();
         break;
@@ -331,5 +337,22 @@ class GameController {
       witchUsedDeathPotion: false,
       accusedPlayerId: null,
     );
+  }
+
+  void forceNextPhase() {
+    _advancePhase();
+  }
+
+  void killPlayer(String playerId) {
+    _state = _state.copyWith(
+      players: _state.players.map((p) {
+        if (p.id == playerId) {
+          return p.copyWith(isAlive: false);
+        }
+        return p;
+      }).toList(),
+    );
+    // Trigger win check in case this kill ends the game
+    _checkWinCondition(_state.players);
   }
 }

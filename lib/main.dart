@@ -154,6 +154,24 @@ class _HostHomePageState extends State<HostHomePage> {
                   const Spacer(),
                   if (_serverAddress.isNotEmpty)
                     Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          _server?.forceNextPhase();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Phase Forced!')),
+                          );
+                        },
+                        icon: const Icon(Icons.skip_next),
+                        label: const Text('Force Phase'),
+                      ),
+                    ),
+                  if (_serverAddress.isNotEmpty)
+                    Padding(
                       padding: const EdgeInsets.only(bottom: 20),
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
@@ -193,6 +211,11 @@ class _HostHomePageState extends State<HostHomePage> {
                           itemCount: _currentState!.players.length,
                           itemBuilder: (context, index) {
                             final player = _currentState!.players[index];
+                            // Calculate votes received
+                            final votesReceived = _currentState!.votes.values
+                                .where((id) => id == player.id)
+                                .length;
+
                             return ListTile(
                               leading: CircleAvatar(
                                 backgroundColor:
@@ -213,9 +236,25 @@ class _HostHomePageState extends State<HostHomePage> {
                                 ),
                               ),
                               subtitle: Text(
-                                  "Role: ${player.role.name} ${!player.isReady ? '(Not Ready)' : ''}"),
+                                  "Role: ${player.role.name} ${!player.isReady ? '(Not Ready)' : ''}" +
+                                      (_currentState!.phase == GamePhase.vote
+                                          ? " | Votes: $votesReceived"
+                                          : "")),
                               trailing: player.isAlive
-                                  ? null
+                                  ? PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'kill') {
+                                          _server?.killPlayer(player.id);
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: 'kill',
+                                          child: Text('Kill Player'),
+                                        ),
+                                      ],
+                                      icon: const Icon(Icons.more_vert),
+                                    )
                                   : const Text("DEAD",
                                       style: TextStyle(
                                           color: Colors.red,

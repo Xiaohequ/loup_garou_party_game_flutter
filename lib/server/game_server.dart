@@ -137,6 +137,16 @@ class GameServer {
     _broadcastState();
   }
 
+  void forceNextPhase() {
+    _gameController.forceNextPhase();
+    _broadcastState();
+  }
+
+  void killPlayer(String playerId) {
+    _gameController.killPlayer(playerId);
+    _broadcastState();
+  }
+
   Future<void> stop() async {
     await _server?.close();
     for (var client in _clients) client.sink.close();
