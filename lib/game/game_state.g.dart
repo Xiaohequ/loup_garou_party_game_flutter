@@ -23,6 +23,7 @@ GameState _$GameStateFromJson(Map<String, dynamic> json) => GameState(
       witchUsedLifePotion: json['witchUsedLifePotion'] as bool? ?? false,
       witchUsedDeathPotion: json['witchUsedDeathPotion'] as bool? ?? false,
       seerRevealedId: json['seerRevealedId'] as String?,
+      accusedPlayerId: json['accusedPlayerId'] as String?,
       dyingPlayerIds: (json['dyingPlayerIds'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
@@ -38,6 +39,7 @@ Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
       'witchUsedLifePotion': instance.witchUsedLifePotion,
       'witchUsedDeathPotion': instance.witchUsedDeathPotion,
       'seerRevealedId': instance.seerRevealedId,
+      'accusedPlayerId': instance.accusedPlayerId,
       'dyingPlayerIds': instance.dyingPlayerIds,
     };
 
@@ -47,6 +49,8 @@ const _$GamePhaseEnumMap = {
   GamePhase.night: 'night',
   GamePhase.day: 'day',
   GamePhase.vote: 'vote',
+  GamePhase.voteResult: 'voteResult',
+  GamePhase.defenseSpeech: 'defenseSpeech',
   GamePhase.end: 'end',
 };
 

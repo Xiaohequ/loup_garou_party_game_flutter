@@ -9,6 +9,8 @@ enum GamePhase {
   night,
   day,
   vote,
+  voteResult,
+  defenseSpeech,
   end,
 }
 
@@ -45,6 +47,7 @@ class GameState {
   final bool witchUsedLifePotion;
   final bool witchUsedDeathPotion;
   final String? seerRevealedId; // ID of player revealed to Seer this turn
+  final String? accusedPlayerId; // Player accused during day vote
   final List<String> dyingPlayerIds; // Players marked for death
 
   const GameState({
@@ -56,6 +59,7 @@ class GameState {
     this.witchUsedLifePotion = false,
     this.witchUsedDeathPotion = false,
     this.seerRevealedId,
+    this.accusedPlayerId,
     this.dyingPlayerIds = const [],
   });
 
@@ -72,6 +76,7 @@ class GameState {
     bool? witchUsedLifePotion,
     bool? witchUsedDeathPotion,
     String? seerRevealedId,
+    String? accusedPlayerId,
     List<String>? dyingPlayerIds,
   }) {
     return GameState(
@@ -83,6 +88,7 @@ class GameState {
       witchUsedLifePotion: witchUsedLifePotion ?? this.witchUsedLifePotion,
       witchUsedDeathPotion: witchUsedDeathPotion ?? this.witchUsedDeathPotion,
       seerRevealedId: seerRevealedId ?? this.seerRevealedId,
+      accusedPlayerId: accusedPlayerId ?? this.accusedPlayerId,
       dyingPlayerIds: dyingPlayerIds ?? this.dyingPlayerIds,
     );
   }

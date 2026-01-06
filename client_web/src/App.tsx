@@ -3,6 +3,8 @@ import { RoleReveal } from '@/components/RoleReveal'
 import { NightView } from '@/components/NightView'
 import { DayView } from '@/components/DayView'
 import { VoteView } from '@/components/VoteView'
+import { VoteResultView } from '@/components/VoteResultView'
+
 import { useGameSocket } from '@/hooks/useGameSocket'
 import { GamePhase } from '@/types';
 
@@ -63,6 +65,13 @@ function App() {
     if (gameState.phase === GamePhase.vote && myPlayer) {
         return <VoteView gameState={gameState} myPlayer={myPlayer} onAction={sendAction} />;
     }
+
+    // Phase: Vote Result
+    if (gameState.phase === GamePhase.voteResult && myPlayer) {
+        return <VoteResultView gameState={gameState} myPlayer={myPlayer} onAction={sendAction} />;
+    }
+
+
 
     // Phase: End
     if (gameState.phase === GamePhase.end) {

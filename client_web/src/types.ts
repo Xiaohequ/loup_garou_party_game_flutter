@@ -4,6 +4,8 @@ export enum GamePhase {
     night = 'night',
     day = 'day',
     vote = 'vote',
+    voteResult = 'voteResult',
+    defenseSpeech = 'defenseSpeech',
     end = 'end',
 }
 
@@ -40,6 +42,7 @@ export interface GameState {
     witchUsedLifePotion: boolean;
     witchUsedDeathPotion: boolean;
     seerRevealedId: string | null;
+    accusedPlayerId: string | null;
     dyingPlayerIds: string[];
 }
 

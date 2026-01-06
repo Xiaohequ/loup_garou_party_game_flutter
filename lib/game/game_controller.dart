@@ -216,6 +216,11 @@ class GameController {
           _resolveDayVote();
         }
       }
+    } else if (_state.phase == GamePhase.voteResult) {
+      if (actionType == 'END_SPEECH') {
+        // Eliminate the accused directly from voteResult
+        _endDay(_state.accusedPlayerId);
+      }
     }
   }
 
@@ -244,15 +249,22 @@ class GameController {
       }
     });
 
-    String? eliminatedId;
+    String? accusedId;
     if (maxTargets.length == 1) {
-      eliminatedId = maxTargets.first;
+      accusedId = maxTargets.first;
     } else {
       // Tie -> No death (MVP)
-      eliminatedId = null;
+      accusedId = null;
     }
 
-    _endDay(eliminatedId);
+    if (accusedId != null) {
+      _state = _state.copyWith(
+        phase: GamePhase.voteResult,
+        accusedPlayerId: accusedId,
+      );
+    } else {
+      _endDay(null);
+    }
   }
 
   void _endDay(String? eliminatedId) {
@@ -275,6 +287,7 @@ class GameController {
       players: players,
       votes: {},
       dyingPlayerIds: [],
+      accusedPlayerId: null,
       // Start of new night
       subPhase: NightSubPhase.werewolfTurn, // Order: Wolf -> Seer -> Witch
       seerRevealedId: null,
@@ -316,6 +329,7 @@ class GameController {
       seerRevealedId: null,
       witchUsedLifePotion: false,
       witchUsedDeathPotion: false,
+      accusedPlayerId: null,
     );
   }
 }
