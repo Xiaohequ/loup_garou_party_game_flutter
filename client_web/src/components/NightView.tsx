@@ -21,7 +21,7 @@ export function NightView({ gameState, myPlayer, onAction }: NightViewProps) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4">
                 <div className="text-center space-y-4">
-                    <h1 className="text-4xl text-indigo-400 font-bold animate-pulse">Nuit...</h1>
+                    <h1 className="text-4xl text-indigo-400 font-bold animate-pulse">Nuit {gameState.turnCount}...</h1>
                     <p className="text-slate-500">Dormez paisiblement.</p>
                 </div>
             </div>

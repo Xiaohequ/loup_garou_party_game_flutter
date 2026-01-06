@@ -4,9 +4,10 @@ import { NightView } from '@/components/NightView'
 import { DayView } from '@/components/DayView'
 import { VoteView } from '@/components/VoteView'
 import { VoteResultView } from '@/components/VoteResultView'
+import { HunterView } from '@/components/HunterView'
 
 import { useGameSocket } from '@/hooks/useGameSocket'
-import { GamePhase } from '@/types';
+import { GamePhase, GameWinner } from '@/types';
 
 
 function App() {
@@ -73,18 +74,39 @@ function App() {
 
 
 
+    // Phase: Hunter Revenge
+    if (gameState.phase === GamePhase.hunterRevenge && myPlayer) {
+        return <HunterView gameState={gameState} myPlayer={myPlayer} onAction={sendAction} />;
+    }
+
     // Phase: End
     if (gameState.phase === GamePhase.end) {
+        let title = "FIN DE PARTIE";
+        let color = "text-yellow-500";
+        if (gameState.winner === GameWinner.villagers) {
+            title = "VICTOIRE DES VILLAGEOIS";
+            color = "text-green-500";
+        } else if (gameState.winner === GameWinner.werewolves) {
+            title = "VICTOIRE DES LOUPS";
+            color = "text-red-600";
+        }
+
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white p-4 text-center">
-                <h1 className="text-6xl font-black mb-6 text-yellow-500">FIN DE PARTIE</h1>
-                <div className="p-6 bg-slate-800 rounded-lg">
-                    <p className="text-xl mb-4">Les Survivants :</p>
-                    <ul className="mb-6">
+                <h1 className={`text-5xl md:text-6xl font-black mb-6 ${color}`}>{title}</h1>
+                <div className="p-6 bg-slate-800 rounded-lg w-full max-w-md">
+                    <p className="text-xl mb-4 font-semibold text-slate-300">Les Survivants :</p>
+                    <ul className="mb-6 space-y-2">
                         {gameState.players.filter(p => p.isAlive).map(p => (
-                            <li key={p.id} className="text-2xl font-bold">{p.name} ({p.role})</li>
+                            <li key={p.id} className="text-2xl font-bold bg-slate-700 p-2 rounded flex justify-between items-center">
+                                <span>{p.name}</span>
+                                <span className="text-sm font-normal text-slate-400">({p.role})</span>
+                            </li>
                         ))}
                     </ul>
+                    {gameState.players.filter(p => p.isAlive).length === 0 && (
+                        <p className="text-slate-500 italic mb-6">Aucun survivant...</p>
+                    )}
                     <p className="text-sm text-slate-400">Merci d'avoir joué !</p>
                 </div>
             </div>

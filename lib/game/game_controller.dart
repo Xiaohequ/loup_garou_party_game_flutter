@@ -72,18 +72,48 @@ class GameController {
     var players = [..._state.players];
     players.shuffle();
 
-    // Simple distribution for dev:
-    // 1 Wolf, 1 Seer, 1 Witch, Rest Villagers
-    final updatedPlayers = <Player>[];
-    for (var i = 0; i < players.length; i++) {
-      var role = Role.villager;
-      if (i == 0)
-        role = Role.werewolf;
-      else if (i == 1)
-        role = Role.seer;
-      else if (i == 2) role = Role.witch;
+    final totalPlayers = players.length;
+    // Basic Balancing Logic
+    // Minimum 1 Wolf.
+    // For 3-5 players: 1 Wolf.
+    // For 6-8 players: 2 Wolves.
+    // For 9+ players: 3 Wolves (approx 1/3).
+    int wolfCount = 1;
+    if (totalPlayers >= 6 && totalPlayers < 9) {
+      wolfCount = 2;
+    } else if (totalPlayers >= 9) {
+      wolfCount = (totalPlayers / 3).floor();
+    }
 
-      updatedPlayers.add(players[i].copyWith(role: role));
+    final roles = <Role>[];
+
+    // Add Wolves
+    for (var i = 0; i < wolfCount; i++) roles.add(Role.werewolf);
+
+    // Add Specials
+    if (totalPlayers >= 4) {
+      roles.add(Role.seer);
+      roles.add(Role.witch);
+    }
+    // For very small dev games (3 players), maybe omit Witch/Seer or keep simple?
+    // Let's keep existing simple dev mode if < 4 for testing
+    if (totalPlayers < 4 && totalPlayers > 1) {
+      // Force 1 Wolf, 1 Seer, rest Villagers (if any)
+      // Actually, if we have just 3: Wolf, Seer, Villager is balanced-ish for testing
+      if (!roles.contains(Role.seer)) roles.add(Role.seer);
+    }
+
+    // Fill rest with Villagers
+    while (roles.length < totalPlayers) {
+      roles.add(Role.villager);
+    }
+
+    // Shuffle roles to ensure randomness (even though players were shuffled, shuffling roles again doesn't hurt)
+    roles.shuffle();
+
+    final updatedPlayers = <Player>[];
+    for (var i = 0; i < totalPlayers; i++) {
+      updatedPlayers.add(players[i].copyWith(role: roles[i]));
     }
 
     _state = _state.copyWith(players: updatedPlayers);
@@ -97,6 +127,8 @@ class GameController {
       votes: {},
       dyingPlayerIds: [],
       seerRevealedId: null,
+      werewolfHuntTargetId: null,
+      turnCount: _state.turnCount + 1,
     );
     // Check if Werewolf exists/is alive, otherwise skip
     if (!_isRoleAlive(Role.werewolf)) {
@@ -112,7 +144,10 @@ class GameController {
     switch (_state.subPhase) {
       case NightSubPhase.werewolfTurn:
         _resolveWerewolfVote();
-        _state = _state.copyWith(subPhase: NightSubPhase.seerTurn);
+        _state = _state.copyWith(
+          subPhase: NightSubPhase.seerTurn,
+          seerRevealedId: null,
+        );
         if (!_isRoleAlive(Role.seer)) _nextNightTurn();
         break;
       case NightSubPhase.seerTurn:
@@ -297,6 +332,8 @@ class GameController {
       // Start of new night
       subPhase: NightSubPhase.werewolfTurn, // Order: Wolf -> Seer -> Witch
       seerRevealedId: null,
+      werewolfHuntTargetId: null,
+      turnCount: _state.turnCount + 1,
     );
 
     // Check if Werewolf exists/is alive, otherwise skip
@@ -313,14 +350,19 @@ class GameController {
 
     if (activeWolves == 0) {
       _state = _state.copyWith(
-          phase: GamePhase.end, players: players); // Villagers Win
-      // TODO: Add winner field to state
+        phase: GamePhase.end,
+        players: players,
+        winner: GameWinner.villagers,
+      ); // Villagers Win
       return true;
     }
 
     if (activeWolves >= activeVillagers) {
-      _state =
-          _state.copyWith(phase: GamePhase.end, players: players); // Wolves Win
+      _state = _state.copyWith(
+        phase: GamePhase.end,
+        players: players,
+        winner: GameWinner.werewolves,
+      ); // Wolves Win
       return true;
     }
     return false;
@@ -336,6 +378,7 @@ class GameController {
       witchUsedLifePotion: false,
       witchUsedDeathPotion: false,
       accusedPlayerId: null,
+      werewolfHuntTargetId: null,
     );
   }
 

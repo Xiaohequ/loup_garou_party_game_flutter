@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:qr_flutter/qr_flutter.dart';
 
 import 'server/game_server.dart';
 import 'game/game_state.dart';
@@ -37,7 +38,6 @@ class HostHomePage extends StatefulWidget {
 
 class _HostHomePageState extends State<HostHomePage> {
   GameServer? _server;
-  String _serverInfo = 'Initializing...';
   String _serverAddress = '';
   GameState? _currentState;
 
@@ -61,13 +61,13 @@ class _HostHomePageState extends State<HostHomePage> {
 
       setState(() {
         _serverAddress = "http://${_server!.address}:${_server!.port}";
-        _serverInfo = 'Server running at\n$_serverAddress\n\nScan to join!';
+        // _serverInfo = 'Server running at\n$_serverAddress\n\nScan to join!';
       });
     } catch (e, stack) {
       print(e);
       print(stack);
       setState(() {
-        _serverInfo = 'Failed to start server: $e';
+        // _serverInfo = 'Failed to start server: $e';
       });
     }
   }
@@ -133,10 +133,35 @@ class _HostHomePageState extends State<HostHomePage> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      _serverInfo,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                    child: Column(
+                      children: [
+                        Text(
+                          '1. Connect to same Wi-Fi',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '2. Scan to Join:',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 10),
+                        if (_serverAddress.isNotEmpty)
+                          Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(8.0),
+                            child: QrImageView(
+                              data: _serverAddress,
+                              version: QrVersions.auto,
+                              size: 200.0,
+                            ),
+                          ),
+                        const SizedBox(height: 10),
+                        Text(
+                          _serverAddress,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -202,8 +227,10 @@ class _HostHomePageState extends State<HostHomePage> {
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Text(
-                          "Players (${_currentState!.players.length}) - Phase: ${_currentState!.phase.name}",
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          "Players (${_currentState!.players.length}) - Phase: ${_currentState!.phase.name}" +
+                              (_currentState!.phase == GamePhase.end
+                                  ? " - WINNER: ${_currentState!.winner.name.toUpperCase()}!"
+                                  : ""),
                         ),
                       ),
                       Expanded(

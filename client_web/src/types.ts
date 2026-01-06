@@ -6,7 +6,15 @@ export enum GamePhase {
     vote = 'vote',
     voteResult = 'voteResult',
     defenseSpeech = 'defenseSpeech',
+    hunterRevenge = 'hunterRevenge',
     end = 'end',
+}
+
+export enum GameWinner {
+    none = 'none',
+    villagers = 'villagers',
+    werewolves = 'werewolves',
+    draw = 'draw',
 }
 
 export enum Role {
@@ -36,6 +44,7 @@ export interface Player {
 export interface GameState {
     phase: GamePhase;
     subPhase: NightSubPhase;
+    winner: GameWinner;
     players: Player[];
     turnCount: number;
     votes: Record<string, string>; // VoterID -> TargetID
@@ -50,6 +59,8 @@ export interface PlayerInfoPayload {
     id: string;
     name: string;
 }
+
+export type ActionPayload = any;
 
 export type ServerMessage =
     | { type: 'STATE_UPDATE'; state: GameState }

@@ -11,7 +11,16 @@ enum GamePhase {
   vote,
   voteResult,
   defenseSpeech,
+  hunterRevenge,
   end,
+}
+
+@JsonEnum()
+enum GameWinner {
+  none,
+  villagers,
+  werewolves,
+  draw, // If everyone dies
 }
 
 @JsonEnum()
@@ -36,23 +45,23 @@ enum NightSubPhase {
 class GameState {
   final GamePhase phase;
   final NightSubPhase subPhase;
+  final GameWinner winner; // Added winner
   final List<Player> players;
   final int turnCount;
 
-  // Voting & Actions Maps
-  // generic voting map: voterId -> targetId
-  // Used for Werewolf votes, Day votes, etc.
+  // ... other fields ...
   final Map<String, String> votes;
-
   final bool witchUsedLifePotion;
   final bool witchUsedDeathPotion;
-  final String? seerRevealedId; // ID of player revealed to Seer this turn
-  final String? accusedPlayerId; // Player accused during day vote
-  final List<String> dyingPlayerIds; // Players marked for death
+  final String? seerRevealedId;
+  final String? accusedPlayerId;
+  final String? werewolfHuntTargetId;
+  final List<String> dyingPlayerIds;
 
   const GameState({
     this.phase = GamePhase.lobby,
     this.subPhase = NightSubPhase.none,
+    this.winner = GameWinner.none,
     this.players = const [],
     this.turnCount = 0,
     this.votes = const {},
@@ -60,6 +69,7 @@ class GameState {
     this.witchUsedDeathPotion = false,
     this.seerRevealedId,
     this.accusedPlayerId,
+    this.werewolfHuntTargetId,
     this.dyingPlayerIds = const [],
   });
 
@@ -70,6 +80,7 @@ class GameState {
   GameState copyWith({
     GamePhase? phase,
     NightSubPhase? subPhase,
+    GameWinner? winner,
     List<Player>? players,
     int? turnCount,
     Map<String, String>? votes,
@@ -77,11 +88,13 @@ class GameState {
     bool? witchUsedDeathPotion,
     String? seerRevealedId,
     String? accusedPlayerId,
+    String? werewolfHuntTargetId,
     List<String>? dyingPlayerIds,
   }) {
     return GameState(
       phase: phase ?? this.phase,
       subPhase: subPhase ?? this.subPhase,
+      winner: winner ?? this.winner,
       players: players ?? this.players,
       turnCount: turnCount ?? this.turnCount,
       votes: votes ?? this.votes,
@@ -89,6 +102,7 @@ class GameState {
       witchUsedDeathPotion: witchUsedDeathPotion ?? this.witchUsedDeathPotion,
       seerRevealedId: seerRevealedId ?? this.seerRevealedId,
       accusedPlayerId: accusedPlayerId ?? this.accusedPlayerId,
+      werewolfHuntTargetId: werewolfHuntTargetId ?? this.werewolfHuntTargetId,
       dyingPlayerIds: dyingPlayerIds ?? this.dyingPlayerIds,
     );
   }
