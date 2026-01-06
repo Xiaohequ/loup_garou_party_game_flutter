@@ -22,6 +22,19 @@ export const useGameSocket = () => {
                 const data = JSON.parse(lastMessage.data);
                 if (data.type === 'STATE_UPDATE') {
                     setGameState(data.state);
+
+                    // Check if we were kicked/reset
+                    const currentId = sessionStorage.getItem('playerId');
+                    if (currentId && data.state.players) {
+                        const me = data.state.players.find((p: any) => p.id === currentId);
+                        if (!me) {
+                            // We are not in the player list anymore => Reset local state
+                            sessionStorage.removeItem('playerId');
+                            sessionStorage.removeItem('playerName');
+                            setPlayerId(null);
+                        }
+                    }
+
                 } else if (data.type === 'PLAYER_INFO') {
                     const newId = data.payload.id;
                     const newName = data.payload.name;

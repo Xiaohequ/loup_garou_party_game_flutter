@@ -87,13 +87,13 @@ class GameController {
     _resetReady();
     _state = _state.copyWith(
       phase: GamePhase.night,
-      subPhase: NightSubPhase.seerTurn, // Seer goes first usually
+      subPhase: NightSubPhase.werewolfTurn, // Werewolves go first now
       votes: {},
       dyingPlayerIds: [],
       seerRevealedId: null,
     );
-    // Check if Seer exists/is alive, otherwise skip
-    if (!_isRoleAlive(Role.seer)) {
+    // Check if Werewolf exists/is alive, otherwise skip
+    if (!_isRoleAlive(Role.werewolf)) {
       _nextNightTurn();
     }
   }
@@ -104,12 +104,12 @@ class GameController {
 
   void _nextNightTurn() {
     switch (_state.subPhase) {
-      case NightSubPhase.seerTurn:
-        _state = _state.copyWith(subPhase: NightSubPhase.werewolfTurn);
-        if (!_isRoleAlive(Role.werewolf)) _nextNightTurn();
-        break;
       case NightSubPhase.werewolfTurn:
         _resolveWerewolfVote();
+        _state = _state.copyWith(subPhase: NightSubPhase.seerTurn);
+        if (!_isRoleAlive(Role.seer)) _nextNightTurn();
+        break;
+      case NightSubPhase.seerTurn:
         _state = _state.copyWith(subPhase: NightSubPhase.witchTurn);
         if (!_isRoleAlive(Role.witch)) _nextNightTurn();
         break;
@@ -155,17 +155,10 @@ class GameController {
           if (_state.subPhase == NightSubPhase.seerTurn) {
             final targetId = payload['targetId'];
             _state = _state.copyWith(seerRevealedId: targetId);
-            // Auto advance for seer after reveal? Or wait for confirm?
-            // Let's auto advance for now to keep it simple or wait for separate "DONE" action?
-            // Simpler: Set revealed ID, then Client sends "DONE" or just auto-advance after delay?
-            // Ideally: Seer sees result, then clicks "OK".
-            // Let's assume Client sends "DONE" after viewing.
           }
           break;
 
-        case 'NIGHT_DONE': // Generic "Validation"
-          // For Seer: After seeing role
-          // For Witch: After potion
+        case 'NIGHT_DONE':
           _nextNightTurn();
           break;
 
@@ -176,27 +169,21 @@ class GameController {
             newVotes[playerId] = targetId;
             _state = _state.copyWith(votes: newVotes);
 
-            // If all active wolves voted?
             final activeWolves = _state.players
                 .where((p) => p.role == Role.werewolf && p.isAlive);
             if (newVotes.length >= activeWolves.length) {
-              // Auto advance? Maybe wait a bit or let them change?
-              // Let's wait for a "lock in" or just explicit timer/Game Master.
-              // For MVP: Auto advance if all voted
               _nextNightTurn();
             }
           }
           break;
 
         case 'WITCH_ACTION':
-          // payload: { save: boolean, killTargetId: string | null }
           if (_state.subPhase == NightSubPhase.witchTurn) {
-            // Logic to update dyingPlayerIds
             List<String> currentDying = List.from(_state.dyingPlayerIds);
 
             if (payload['save'] == true &&
                 _state.witchUsedLifePotion == false) {
-              if (currentDying.isNotEmpty) currentDying.removeLast(); // Revive
+              if (currentDying.isNotEmpty) currentDying.removeLast();
               _state = _state.copyWith(witchUsedLifePotion: true);
             }
 
@@ -211,6 +198,124 @@ class GameController {
           }
           break;
       }
+    } else if (_state.phase == GamePhase.day) {
+      if (actionType == 'START_VOTE') {
+        _state = _state.copyWith(phase: GamePhase.vote, votes: {});
+      }
+    } else if (_state.phase == GamePhase.vote) {
+      if (actionType == 'DAY_VOTE') {
+        final targetId = payload['targetId'];
+        final newVotes = Map<String, String>.from(_state.votes);
+        newVotes[playerId] = targetId; // Change vote allowed
+        _state = _state.copyWith(votes: newVotes);
+
+        // Auto-end vote if everyone alive has voted?
+        final alivePlayers = _state.players.where((p) => p.isAlive);
+        if (newVotes.length >= alivePlayers.length) {
+          // All voted, calculate result
+          _resolveDayVote();
+        }
+      }
     }
+  }
+
+  void _resolveDayVote() {
+    // Count votes
+    final voteCounts = <String, int>{};
+    for (var targetId in _state.votes.values) {
+      voteCounts[targetId] = (voteCounts[targetId] ?? 0) + 1;
+    }
+
+    if (voteCounts.isEmpty) {
+      // No votes? Random or no death? Assume no death for now.
+      _endDay(null);
+      return;
+    }
+
+    // Find max
+    var maxVotes = 0;
+    var maxTargets = <String>[];
+    voteCounts.forEach((targetId, count) {
+      if (count > maxVotes) {
+        maxVotes = count;
+        maxTargets = [targetId];
+      } else if (count == maxVotes) {
+        maxTargets.add(targetId);
+      }
+    });
+
+    String? eliminatedId;
+    if (maxTargets.length == 1) {
+      eliminatedId = maxTargets.first;
+    } else {
+      // Tie -> No death (MVP)
+      eliminatedId = null;
+    }
+
+    _endDay(eliminatedId);
+  }
+
+  void _endDay(String? eliminatedId) {
+    var players = [..._state.players];
+    if (eliminatedId != null) {
+      players = players.map((p) {
+        if (p.id == eliminatedId) {
+          return p.copyWith(isAlive: false);
+        }
+        return p;
+      }).toList();
+    }
+
+    // Check Win Condition
+    if (_checkWinCondition(players)) return; // Game Ends
+
+    // Go to Night
+    _state = _state.copyWith(
+      phase: GamePhase.night,
+      players: players,
+      votes: {},
+      dyingPlayerIds: [],
+      // Start of new night
+      subPhase: NightSubPhase.werewolfTurn, // Order: Wolf -> Seer -> Witch
+      seerRevealedId: null,
+    );
+
+    // Check if Werewolf exists/is alive, otherwise skip
+    if (!_isRoleAlive(Role.werewolf)) {
+      _nextNightTurn();
+    }
+  }
+
+  bool _checkWinCondition(List<Player> players) {
+    final activeWolves =
+        players.where((p) => p.isAlive && p.role == Role.werewolf).length;
+    final activeVillagers =
+        players.where((p) => p.isAlive && p.role != Role.werewolf).length;
+
+    if (activeWolves == 0) {
+      _state = _state.copyWith(
+          phase: GamePhase.end, players: players); // Villagers Win
+      // TODO: Add winner field to state
+      return true;
+    }
+
+    if (activeWolves >= activeVillagers) {
+      _state =
+          _state.copyWith(phase: GamePhase.end, players: players); // Wolves Win
+      return true;
+    }
+    return false;
+  }
+
+  void resetGame() {
+    _state = const GameState(
+      phase: GamePhase.lobby,
+      players: [], // Clear all players
+      votes: {},
+      dyingPlayerIds: [],
+      seerRevealedId: null,
+      witchUsedLifePotion: false,
+      witchUsedDeathPotion: false,
+    );
   }
 }

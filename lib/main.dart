@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import 'server/game_server.dart';
+import 'game/game_state.dart';
 
 void main() {
   runApp(const LoupGarouApp());
@@ -38,6 +39,7 @@ class _HostHomePageState extends State<HostHomePage> {
   GameServer? _server;
   String _serverInfo = 'Initializing...';
   String _serverAddress = '';
+  GameState? _currentState;
 
   @override
   void initState() {
@@ -50,6 +52,12 @@ class _HostHomePageState extends State<HostHomePage> {
       final staticPath = await _extractWebAssets();
       _server = GameServer(staticFilesPath: staticPath);
       await _server!.start();
+
+      _server!.stateStream.listen((state) {
+        setState(() {
+          _currentState = state;
+        });
+      });
 
       setState(() {
         _serverAddress = "http://${_server!.address}:${_server!.port}";
@@ -113,29 +121,113 @@ class _HostHomePageState extends State<HostHomePage> {
       appBar: AppBar(
         title: const Text('Loup Garou Host'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _serverInfo,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Row(
+        children: [
+          // Sidebar: Connection Info & Controls
+          Expanded(
+            flex: 2,
+            child: Container(
+              color: Colors.deepPurple.shade50,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      _serverInfo,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  if (_serverAddress.isNotEmpty)
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _serverAddress));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Address copied!')),
+                        );
+                      },
+                      icon: const Icon(Icons.copy),
+                      label: const Text('Copy Link'),
+                    ),
+                  const Spacer(),
+                  if (_serverAddress.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          _server?.resetGame();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Game Reset!')),
+                          );
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reset Game'),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
-            if (_serverAddress.isNotEmpty)
-              ElevatedButton(
-                onPressed: () {
-                  // Logic to copy or share
-                  Clipboard.setData(ClipboardData(text: _serverAddress));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Address copied!')),
-                  );
-                },
-                child: const Text('Copy Link'),
-              )
-          ],
-        ),
+          ),
+          // Main Content: Player List
+          Expanded(
+            flex: 5,
+            child: _currentState == null
+                ? const Center(child: Text("Waiting for players..."))
+                : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          "Players (${_currentState!.players.length}) - Phase: ${_currentState!.phase.name}",
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _currentState!.players.length,
+                          itemBuilder: (context, index) {
+                            final player = _currentState!.players[index];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor:
+                                    player.isAlive ? Colors.green : Colors.red,
+                                child: Icon(
+                                  player.isAlive
+                                      ? Icons.favorite
+                                      : Icons.dangerous,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              title: Text(
+                                player.name,
+                                style: TextStyle(
+                                  decoration: player.isAlive
+                                      ? null
+                                      : TextDecoration.lineThrough,
+                                ),
+                              ),
+                              subtitle: Text(
+                                  "Role: ${player.role.name} ${!player.isReady ? '(Not Ready)' : ''}"),
+                              trailing: player.isAlive
+                                  ? null
+                                  : const Text("DEAD",
+                                      style: TextStyle(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold)),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }

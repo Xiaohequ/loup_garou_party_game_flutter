@@ -108,10 +108,16 @@ class GameServer {
     }
   }
 
+  final _stateController = StreamController<GameState>.broadcast();
+  Stream<GameState> get stateStream => _stateController.stream;
+
   void _broadcastState() {
+    final state = _gameController.state;
+    _stateController.add(state);
+
     final stateJson = jsonEncode({
       'type': 'STATE_UPDATE',
-      'state': _gameController.state.toJson(),
+      'state': state.toJson(),
     });
 
     for (var client in _clients) {
@@ -126,9 +132,15 @@ class GameServer {
     }));
   }
 
+  void resetGame() {
+    _gameController.resetGame();
+    _broadcastState();
+  }
+
   Future<void> stop() async {
     await _server?.close();
     for (var client in _clients) client.sink.close();
+    await _stateController.close();
   }
 
   String get address => _server?.address.address ?? 'Unknown';

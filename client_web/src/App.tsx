@@ -1,6 +1,8 @@
 import { Lobby } from '@/components/Lobby'
 import { RoleReveal } from '@/components/RoleReveal'
 import { NightView } from '@/components/NightView'
+import { DayView } from '@/components/DayView'
+import { VoteView } from '@/components/VoteView'
 import { useGameSocket } from '@/hooks/useGameSocket'
 import { GamePhase } from '@/types';
 
@@ -52,26 +54,37 @@ function App() {
         return <NightView gameState={gameState} myPlayer={myPlayer} onAction={sendAction} />;
     }
 
+    // Phase: Day
+    if (gameState.phase === GamePhase.day && myPlayer) {
+        return <DayView gameState={gameState} myPlayer={myPlayer} onAction={sendAction} />;
+    }
+
+    // Phase: Vote
+    if (gameState.phase === GamePhase.vote && myPlayer) {
+        return <VoteView gameState={gameState} myPlayer={myPlayer} onAction={sendAction} />;
+    }
+
+    // Phase: End
+    if (gameState.phase === GamePhase.end) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-slate-900 text-white p-4 text-center">
+                <h1 className="text-6xl font-black mb-6 text-yellow-500">FIN DE PARTIE</h1>
+                <div className="p-6 bg-slate-800 rounded-lg">
+                    <p className="text-xl mb-4">Les Survivants :</p>
+                    <ul className="mb-6">
+                        {gameState.players.filter(p => p.isAlive).map(p => (
+                            <li key={p.id} className="text-2xl font-bold">{p.name} ({p.role})</li>
+                        ))}
+                    </ul>
+                    <p className="text-sm text-slate-400">Merci d'avoir joué !</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-            <h1 className="text-4xl font-bold mb-4">Phase: {gameState.phase}</h1>
-            <p className="mb-4">Le jour se lève... (À suivre)</p>
-            <div className="p-4 bg-slate-100 rounded w-full max-w-md">
-                <h2 className="font-bold">Survivants:</h2>
-                <ul>
-                    {gameState.players.filter(p => p.isAlive).map(p => (
-                        <li key={p.id}>{p.name}</li>
-                    ))}
-                </ul>
-            </div>
-            <div className="p-4 bg-red-100 rounded w-full max-w-md mt-4">
-                <h2 className="font-bold">Morts cette nuit:</h2>
-                <ul>
-                    {gameState.players.filter(p => !p.isAlive).map(p => (
-                        <li key={p.id}>{p.name} ({p.role})</li>
-                    ))}
-                </ul>
-            </div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
         </div>
     )
 }
