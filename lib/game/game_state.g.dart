@@ -31,6 +31,10 @@ GameState _$GameStateFromJson(Map<String, dynamic> json) => GameState(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      lastNightDeadIds: (json['lastNightDeadIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
@@ -46,6 +50,7 @@ Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
       'accusedPlayerId': instance.accusedPlayerId,
       'werewolfHuntTargetId': instance.werewolfHuntTargetId,
       'dyingPlayerIds': instance.dyingPlayerIds,
+      'lastNightDeadIds': instance.lastNightDeadIds,
     };
 
 const _$GamePhaseEnumMap = {

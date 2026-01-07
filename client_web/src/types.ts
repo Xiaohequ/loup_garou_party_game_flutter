@@ -53,6 +53,7 @@ export interface GameState {
     seerRevealedId: string | null;
     accusedPlayerId: string | null;
     dyingPlayerIds: string[];
+    lastNightDeadIds: string[];
 }
 
 export interface PlayerInfoPayload {

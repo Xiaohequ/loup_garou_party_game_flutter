@@ -11,7 +11,7 @@ interface DayViewProps {
 
 export function DayView({ gameState, myPlayer, onAction }: DayViewProps) {
     const alivePlayers = gameState.players.filter(p => p.isAlive);
-    const deadPlayers = gameState.players.filter(p => !p.isAlive);
+    // const deadPlayers = gameState.players.filter(p => !p.isAlive);
 
     return (
         <div className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
@@ -31,16 +31,24 @@ export function DayView({ gameState, myPlayer, onAction }: DayViewProps) {
                         </div>
                     </div>
 
-                    {deadPlayers.length > 0 && (
+                    {/* Show only players who died LAST NIGHT */}
+                    {gameState.lastNightDeadIds && gameState.lastNightDeadIds.length > 0 ? (
                         <div>
-                            <h3 className="font-bold text-lg mb-2 text-red-600">Morts</h3>
+                            <h3 className="font-bold text-lg mb-2 text-red-600">Morts cette nuit</h3>
                             <div className="flex flex-wrap gap-2">
-                                {deadPlayers.map(p => (
-                                    <span key={p.id} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-                                        {p.name}
-                                    </span>
-                                ))}
+                                {gameState.players
+                                    .filter(p => gameState.lastNightDeadIds.includes(p.id))
+                                    .map(p => (
+                                        <span key={p.id} className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                                            {p.name}
+                                        </span>
+                                    ))}
                             </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <h3 className="font-bold text-lg mb-2 text-slate-500">Morts cette nuit</h3>
+                            <p className="text-slate-400 italic">Aucun mort</p>
                         </div>
                     )}
 

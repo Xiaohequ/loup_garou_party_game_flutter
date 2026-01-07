@@ -57,6 +57,7 @@ class GameState {
   final String? accusedPlayerId;
   final String? werewolfHuntTargetId;
   final List<String> dyingPlayerIds;
+  final List<String> lastNightDeadIds;
 
   const GameState({
     this.phase = GamePhase.lobby,
@@ -71,6 +72,7 @@ class GameState {
     this.accusedPlayerId,
     this.werewolfHuntTargetId,
     this.dyingPlayerIds = const [],
+    this.lastNightDeadIds = const [],
   });
 
   factory GameState.fromJson(Map<String, dynamic> json) =>
@@ -90,6 +92,11 @@ class GameState {
     String? accusedPlayerId,
     String? werewolfHuntTargetId,
     List<String>? dyingPlayerIds,
+    List<String>? lastNightDeadIds,
+    // Reset flags
+    bool resetSeerRevealedId = false,
+    bool resetAccusedPlayerId = false,
+    bool resetWerewolfHuntTargetId = false,
   }) {
     return GameState(
       phase: phase ?? this.phase,
@@ -100,10 +107,16 @@ class GameState {
       votes: votes ?? this.votes,
       witchUsedLifePotion: witchUsedLifePotion ?? this.witchUsedLifePotion,
       witchUsedDeathPotion: witchUsedDeathPotion ?? this.witchUsedDeathPotion,
-      seerRevealedId: seerRevealedId ?? this.seerRevealedId,
-      accusedPlayerId: accusedPlayerId ?? this.accusedPlayerId,
-      werewolfHuntTargetId: werewolfHuntTargetId ?? this.werewolfHuntTargetId,
+      seerRevealedId:
+          resetSeerRevealedId ? null : (seerRevealedId ?? this.seerRevealedId),
+      accusedPlayerId: resetAccusedPlayerId
+          ? null
+          : (accusedPlayerId ?? this.accusedPlayerId),
+      werewolfHuntTargetId: resetWerewolfHuntTargetId
+          ? null
+          : (werewolfHuntTargetId ?? this.werewolfHuntTargetId),
       dyingPlayerIds: dyingPlayerIds ?? this.dyingPlayerIds,
+      lastNightDeadIds: lastNightDeadIds ?? this.lastNightDeadIds,
     );
   }
 }

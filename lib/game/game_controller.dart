@@ -139,9 +139,10 @@ class GameController {
       subPhase: NightSubPhase.werewolfTurn, // Werewolves go first now
       votes: {},
       dyingPlayerIds: [],
-      seerRevealedId: null,
-      werewolfHuntTargetId: null,
+      lastNightDeadIds: [],
       turnCount: _state.turnCount + 1,
+      resetSeerRevealedId: true,
+      resetWerewolfHuntTargetId: true,
     );
     // Check if Werewolf exists/is alive, otherwise skip
     if (!_isRoleAlive(Role.werewolf)) {
@@ -159,7 +160,7 @@ class GameController {
         _resolveWerewolfVote();
         _state = _state.copyWith(
           subPhase: NightSubPhase.seerTurn,
-          seerRevealedId: null,
+          resetSeerRevealedId: true,
         );
         if (!_isRoleAlive(Role.seer)) _nextNightTurn();
         break;
@@ -198,6 +199,7 @@ class GameController {
     _state = _state.copyWith(
       phase: GamePhase.day,
       players: players,
+      lastNightDeadIds: List.from(_state.dyingPlayerIds),
       dyingPlayerIds: [],
     );
   }
@@ -351,9 +353,10 @@ class GameController {
       accusedPlayerId: null,
       // Start of new night
       subPhase: NightSubPhase.werewolfTurn, // Order: Wolf -> Seer -> Witch
-      seerRevealedId: null,
-      werewolfHuntTargetId: null,
       turnCount: _state.turnCount + 1,
+      resetSeerRevealedId: true,
+      resetWerewolfHuntTargetId: true,
+      resetAccusedPlayerId: true,
     );
 
     // Check if Werewolf exists/is alive, otherwise skip
