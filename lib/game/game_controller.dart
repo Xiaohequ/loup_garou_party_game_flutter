@@ -73,39 +73,52 @@ class GameController {
     players.shuffle();
 
     final totalPlayers = players.length;
-    // Basic Balancing Logic
-    // Minimum 1 Wolf.
-    // For 3-5 players: 1 Wolf.
-    // For 6-8 players: 2 Wolves.
-    // For 9+ players: 3 Wolves (approx 1/3).
-    int wolfCount = 1;
-    if (totalPlayers >= 6 && totalPlayers < 9) {
-      wolfCount = 2;
-    } else if (totalPlayers >= 9) {
-      wolfCount = (totalPlayers / 3).floor();
-    }
-
     final roles = <Role>[];
 
-    // Add Wolves
-    for (var i = 0; i < wolfCount; i++) roles.add(Role.werewolf);
-
-    // Add Specials
-    if (totalPlayers >= 4) {
+    if (totalPlayers >= 6) {
+      // Rule for 6+ players:
+      // 1. Mandatory Specials: Seer, Witch, Hunter
       roles.add(Role.seer);
       roles.add(Role.witch);
-    }
-    // For very small dev games (3 players), maybe omit Witch/Seer or keep simple?
-    // Let's keep existing simple dev mode if < 4 for testing
-    if (totalPlayers < 4 && totalPlayers > 1) {
-      // Force 1 Wolf, 1 Seer, rest Villagers (if any)
-      // Actually, if we have just 3: Wolf, Seer, Villager is balanced-ish for testing
-      if (!roles.contains(Role.seer)) roles.add(Role.seer);
-    }
+      roles.add(Role.hunter);
 
-    // Fill rest with Villagers
-    while (roles.length < totalPlayers) {
-      roles.add(Role.villager);
+      // 2. Remaining slots
+      final remainingSlots = totalPlayers - roles.length;
+
+      // 3. Wolves = half of remaining slots (rounded down), favoring Villagers slightly or equal
+      // "Privilégier Villageois = Loup-Garou" implies remaining split roughly half-half.
+      final wolfCount = (remainingSlots / 2).floor();
+
+      for (var i = 0; i < wolfCount; i++) roles.add(Role.werewolf);
+
+      // 4. Fill rest with Villagers
+      while (roles.length < totalPlayers) {
+        roles.add(Role.villager);
+      }
+    } else {
+      // Fallback for < 6 players (Existing logic)
+
+      // Basic Balancing: Minimum 1 Wolf
+      int wolfCount = 1;
+      // For 3-5 players: 1 Wolf is usually enough
+
+      for (var i = 0; i < wolfCount; i++) roles.add(Role.werewolf);
+
+      // Add Specials if enough players
+      if (totalPlayers >= 4) {
+        roles.add(Role.seer);
+        roles.add(Role.witch);
+      }
+
+      // For very small dev games (3 players)
+      if (totalPlayers < 4 && totalPlayers > 1) {
+        if (!roles.contains(Role.seer)) roles.add(Role.seer);
+      }
+
+      // Fill rest with Villagers
+      while (roles.length < totalPlayers) {
+        roles.add(Role.villager);
+      }
     }
 
     // Shuffle roles to ensure randomness (even though players were shuffled, shuffling roles again doesn't hurt)
@@ -212,8 +225,15 @@ class GameController {
 
             final activeWolves = _state.players
                 .where((p) => p.role == Role.werewolf && p.isAlive);
+
+            // Check if all wolves have voted
             if (newVotes.length >= activeWolves.length) {
-              _nextNightTurn();
+              // Check for unanimity
+              final uniqueTargets = newVotes.values.toSet();
+              if (uniqueTargets.length == 1) {
+                _nextNightTurn();
+              }
+              // If not unanimous, wait (players should see their disagreement in UI)
             }
           }
           break;

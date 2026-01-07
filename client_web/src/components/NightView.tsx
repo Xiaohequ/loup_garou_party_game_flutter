@@ -115,6 +115,12 @@ function WerewolfAction({ players, onAction, votes, myId }: { players: Player[],
                     })}
                 </div>
             </ScrollArea>
+            {Object.keys(votes).length > 0 && new Set(Object.values(votes)).size > 1 && (
+                <div className="text-red-500 font-bold text-center animate-pulse bg-red-950/50 p-2 rounded">
+                    Veuillez vous mettre d'accord !<br />
+                    Sélectionnez un seul villageois.
+                </div>
+            )}
         </div>
     )
 }
