@@ -52,6 +52,7 @@ export function NightView({ gameState, myPlayer, onAction }: NightViewProps) {
                             hasLife={!gameState.witchUsedLifePotion}
                             hasDeath={!gameState.witchUsedDeathPotion}
                             onAction={onAction}
+                            myId={myPlayer.id}
                         />
                     )}
                 </CardContent>
@@ -125,7 +126,7 @@ function WerewolfAction({ players, onAction, votes, myId }: { players: Player[],
     )
 }
 
-function WitchAction({ players, dyingIds, hasLife, hasDeath, onAction }: { players: Player[], dyingIds: string[], hasLife: boolean, hasDeath: boolean, onAction: any }) {
+function WitchAction({ players, dyingIds, hasLife, hasDeath, onAction, myId }: { players: Player[], dyingIds: string[], hasLife: boolean, hasDeath: boolean, onAction: any, myId: string }) {
     const [step, setStep] = useState<'life' | 'death'>('life');
     const [actionPayload, setActionPayload] = useState({ save: false, killTargetId: null as string | null });
 
@@ -178,7 +179,7 @@ function WitchAction({ players, dyingIds, hasLife, hasDeath, onAction }: { playe
             <p className="text-slate-400 text-center">Voulez-vous utiliser votre Potion de Mort ?</p>
             <ScrollArea className="h-[200px]">
                 <div className="grid grid-cols-1 gap-2">
-                    {players.filter(p => p.isAlive && p.id !== victim?.id).map(p => (
+                    {players.filter(p => p.isAlive && p.id !== myId).map(p => (
                         <Button
                             key={p.id}
                             variant="outline"
