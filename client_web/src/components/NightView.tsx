@@ -2,7 +2,7 @@ import { GameState, NightSubPhase, Role, Player } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface NightViewProps {
     gameState: GameState;
@@ -16,6 +16,12 @@ export function NightView({ gameState, myPlayer, onAction }: NightViewProps) {
         (subPhase === NightSubPhase.werewolfTurn && myPlayer.role === Role.werewolf) ||
         (subPhase === NightSubPhase.seerTurn && myPlayer.role === Role.seer) ||
         (subPhase === NightSubPhase.witchTurn && myPlayer.role === Role.witch);
+
+    useEffect(() => {
+        if (isMyTurn && navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+    }, [isMyTurn]);
 
     if (!isMyTurn) {
         return (

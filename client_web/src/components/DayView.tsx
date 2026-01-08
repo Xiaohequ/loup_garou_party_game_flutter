@@ -1,6 +1,7 @@
 import { GameState, Player } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect } from "react";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface DayViewProps {
@@ -12,6 +13,12 @@ interface DayViewProps {
 export function DayView({ gameState, myPlayer, onAction }: DayViewProps) {
     const alivePlayers = gameState.players.filter(p => p.isAlive);
     // const deadPlayers = gameState.players.filter(p => !p.isAlive);
+
+    useEffect(() => {
+        if (navigator.vibrate) {
+            navigator.vibrate([500, 200, 500]); // Long vibration for day rise
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
