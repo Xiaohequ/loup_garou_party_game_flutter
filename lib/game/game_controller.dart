@@ -182,7 +182,10 @@ class GameController {
     // For now, just take the first vote, extend logic later
     if (_state.votes.isNotEmpty) {
       final targetId = _state.votes.values.first; // Naive
-      _state = _state.copyWith(dyingPlayerIds: [targetId]);
+      _state = _state.copyWith(
+        dyingPlayerIds: [targetId],
+        werewolfHuntTargetId: targetId,
+      );
     }
     _state = _state.copyWith(votes: {}); // Reset votes
   }
@@ -198,6 +201,25 @@ class GameController {
 
     // Check Win Condition at sunrise
     if (_checkWinCondition(players)) return;
+
+    // Check for Hunter Revenge
+    // Rule: Hunter triggers if killed by Werewolves (not Witch)
+    final hunter = players.cast<Player?>().firstWhere(
+          (p) =>
+              p?.role == Role.hunter && _state.dyingPlayerIds.contains(p?.id),
+          orElse: () => null,
+        );
+
+    if (hunter != null && hunter.id == _state.werewolfHuntTargetId) {
+      // Hunter was killed by Wolves -> Trigger Revenge
+      _state = _state.copyWith(
+        phase: GamePhase.hunterRevenge,
+        players: players,
+        lastNightDeadIds: List.from(_state.dyingPlayerIds),
+        dyingPlayerIds: [],
+      );
+      return;
+    }
 
     _state = _state.copyWith(
       phase: GamePhase.day,
@@ -304,6 +326,37 @@ class GameController {
           voteRound: 2,
           votes: {},
         );
+      }
+    } else if (_state.phase == GamePhase.hunterRevenge) {
+      if (actionType == 'HUNTER_SHOT') {
+        final targetId = payload['targetId'];
+        if (targetId != null) {
+          // Kill the target
+          killPlayer(targetId);
+
+          // Check Win Condition again after Hunter shot
+          if (_checkWinCondition(_state.players)) return;
+
+          // Resume to Day
+          _state = _state.copyWith(
+            phase: GamePhase.day,
+            // Only dyingPlayerIds from night are already moved to lastNightDeadIds
+            // The hunter shot victim is now dead in players list.
+            // We might want to add them to 'lastNightDeadIds' for the day announcement?
+            // "Morts cette nuit" usually includes Hunter's victim.
+            lastNightDeadIds: [..._state.lastNightDeadIds, targetId],
+            dyingPlayerIds: [], // Clear any residuals
+            accusedPlayerId: null,
+            subPhase: NightSubPhase.werewolfTurn, // Reset for next night
+            turnCount: _state.turnCount + 1,
+            resetSeerRevealedId: true,
+            resetWerewolfHuntTargetId: true,
+            resetAccusedPlayerId: true,
+            resetVoteCandidates: true,
+          );
+
+          // Re-check role alive status for next loops if needed, but we go to Day first.
+        }
       }
     }
   }
