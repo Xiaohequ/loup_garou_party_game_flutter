@@ -39,8 +39,36 @@ export function VoteResultView({ gameState, myPlayer, onAction }: VoteResultView
                             </p>
                         </div>
                     ) : (
-                        <div className="text-center text-slate-500">
-                            Personne n'a été désigné.
+                        <div className="text-center space-y-4">
+                            {gameState.voteRound === 1 && gameState.voteCandidates && gameState.voteCandidates.length > 0 ? (
+                                <>
+                                    <div className="text-amber-600 text-lg font-bold">
+                                        Égalité ! <br />
+                                        Veuillez départager les candidats.
+                                    </div>
+                                    <p className="text-sm text-slate-500">
+                                        Candidats : {gameState.players.filter(p => gameState.voteCandidates?.includes(p.id)).map(p => p.name).join(", ")}
+                                    </p>
+                                    <Button
+                                        className="w-full bg-amber-600 text-white hover:bg-amber-700"
+                                        onClick={() => onAction('START_REVOTE', {})}
+                                    >
+                                        Revoter
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="text-slate-500 text-lg font-medium">
+                                        Égalité parfaite. <br /> Pas d'élimination aujourd'hui.
+                                    </div>
+                                    <Button
+                                        className="w-full bg-slate-800 text-white hover:bg-slate-700"
+                                        onClick={() => onAction('VALIDATE_RESULT', {})}
+                                    >
+                                        Valider et dormir
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -48,10 +76,15 @@ export function VoteResultView({ gameState, myPlayer, onAction }: VoteResultView
                         <h4 className="font-bold mb-2 text-sm uppercase text-slate-500">Détails des votes</h4>
                         <ScrollArea className="h-[200px]">
                             {Object.entries(votesByTarget).map(([targetId, voters]) => {
+                                const isAbstain = targetId === "ABSTAIN";
                                 const target = gameState.players.find(p => p.id === targetId);
+                                const name = isAbstain ? "Abstentions" : (target?.name || 'Inconnu');
+
                                 return (
                                     <div key={targetId} className="mb-3">
-                                        <div className="font-bold text-slate-800">{target?.name || 'Inconnu'} ({voters.length} voix)</div>
+                                        <div className={`font-bold ${isAbstain ? 'text-slate-500 italic' : 'text-slate-800'}`}>
+                                            {name} ({voters.length} voix)
+                                        </div>
                                         <div className="text-sm text-slate-500">
                                             Voté par : {voters.join(", ")}
                                         </div>

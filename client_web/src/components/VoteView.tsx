@@ -28,26 +28,43 @@ export function VoteView({ gameState, myPlayer, onAction }: VoteViewProps) {
         <div className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
             <Card className="w-full max-w-md bg-white">
                 <CardHeader>
-                    <CardTitle className="text-center text-2xl text-slate-900">Vote d'élimination</CardTitle>
+                    <CardTitle className="text-center text-2xl text-slate-900">
+                        Vote d'élimination {gameState.voteRound > 1 && `(Tour ${gameState.voteRound})`}
+                    </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <p className="text-center text-slate-600">Choisissez qui éliminer du village.</p>
+                    <p className="text-center text-slate-600">
+                        {gameState.voteRound > 1
+                            ? "Égalité ! Votez pour départager :"
+                            : "Choisissez qui éliminer du village."}
+                    </p>
                     <ScrollArea className="h-[300px] pr-4">
                         <div className="grid grid-cols-1 gap-2">
                             {alivePlayers.map(p => {
+                                const isCandidate = !gameState.voteCandidates || gameState.voteCandidates.includes(p.id);
                                 const isSelected = myVote === p.id;
+
                                 return (
                                     <Button
                                         key={p.id}
                                         variant={isSelected ? "default" : "outline"}
                                         className={`justify-between ${isSelected ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                                        disabled={!isCandidate}
                                         onClick={() => onAction('DAY_VOTE', { targetId: p.id })}
                                     >
-                                        {p.name}
+                                        <span className={!isCandidate ? "opacity-50 line-through" : ""}>{p.name}</span>
                                         {isSelected && <span className="ml-2 font-bold">(Votre choix)</span>}
                                     </Button>
                                 );
                             })}
+                            <Button
+                                variant={myVote === "ABSTAIN" ? "default" : "secondary"}
+                                className={`mt-4 ${myVote === "ABSTAIN" ? 'bg-slate-600 hover:bg-slate-700' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
+                                onClick={() => onAction('DAY_VOTE', { targetId: null })}
+                            >
+                                ⚪ S'abstenir
+                                {myVote === "ABSTAIN" && <span className="ml-2 font-bold">(Votre choix)</span>}
+                            </Button>
                         </div>
                     </ScrollArea>
                     <p className="text-xs text-center text-slate-400 mt-4">

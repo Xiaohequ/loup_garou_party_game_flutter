@@ -54,6 +54,8 @@ export interface GameState {
     accusedPlayerId: string | null;
     dyingPlayerIds: string[];
     lastNightDeadIds: string[];
+    voteRound: number;
+    voteCandidates?: string[] | null;
 }
 
 export interface PlayerInfoPayload {

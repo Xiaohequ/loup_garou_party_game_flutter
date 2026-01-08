@@ -35,6 +35,10 @@ GameState _$GameStateFromJson(Map<String, dynamic> json) => GameState(
               ?.map((e) => e as String)
               .toList() ??
           const [],
+      voteRound: (json['voteRound'] as num?)?.toInt() ?? 1,
+      voteCandidates: (json['voteCandidates'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
 
 Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
@@ -51,6 +55,8 @@ Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
       'werewolfHuntTargetId': instance.werewolfHuntTargetId,
       'dyingPlayerIds': instance.dyingPlayerIds,
       'lastNightDeadIds': instance.lastNightDeadIds,
+      'voteRound': instance.voteRound,
+      'voteCandidates': instance.voteCandidates,
     };
 
 const _$GamePhaseEnumMap = {

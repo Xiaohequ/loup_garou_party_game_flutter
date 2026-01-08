@@ -263,26 +263,44 @@ class GameController {
       }
     } else if (_state.phase == GamePhase.day) {
       if (actionType == 'START_VOTE') {
-        _state = _state.copyWith(phase: GamePhase.vote, votes: {});
+        _state = _state.copyWith(
+          phase: GamePhase.vote,
+          votes: {},
+          voteRound: 1,
+          voteCandidates: null,
+        );
       }
     } else if (_state.phase == GamePhase.vote) {
       if (actionType == 'DAY_VOTE') {
         final targetId = payload['targetId'];
         final newVotes = Map<String, String>.from(_state.votes);
-        newVotes[playerId] = targetId; // Change vote allowed
+        if (targetId != null) {
+          newVotes[playerId] = targetId;
+        } else {
+          // Abstain logic: we can store "ABSTAIN" or just handle it.
+          // Let's store "ABSTAIN" to count participation, but ignore in tally
+          newVotes[playerId] = "ABSTAIN";
+        }
+
         _state = _state.copyWith(votes: newVotes);
 
-        // Auto-end vote if everyone alive has voted?
+        // Auto-end vote if everyone alive has voted
         final alivePlayers = _state.players.where((p) => p.isAlive);
         if (newVotes.length >= alivePlayers.length) {
-          // All voted, calculate result
           _resolveDayVote();
         }
       }
     } else if (_state.phase == GamePhase.voteResult) {
       if (actionType == 'END_SPEECH') {
-        // Eliminate the accused directly from voteResult
         _endDay(_state.accusedPlayerId);
+      } else if (actionType == 'VALIDATE_RESULT') {
+        _endDay(null);
+      } else if (actionType == 'START_REVOTE') {
+        _state = _state.copyWith(
+          phase: GamePhase.vote,
+          voteRound: 2,
+          votes: {},
+        );
       }
     }
   }
@@ -291,43 +309,51 @@ class GameController {
     // Count votes
     final voteCounts = <String, int>{};
     for (var targetId in _state.votes.values) {
+      if (targetId == "ABSTAIN") continue;
       voteCounts[targetId] = (voteCounts[targetId] ?? 0) + 1;
     }
 
-    if (voteCounts.isEmpty) {
-      // No votes? Random or no death? Assume no death for now.
-      _endDay(null);
-      return;
-    }
-
-    // Find max
-    var maxVotes = 0;
-    var maxTargets = <String>[];
-    voteCounts.forEach((targetId, count) {
-      if (count > maxVotes) {
-        maxVotes = count;
-        maxTargets = [targetId];
-      } else if (count == maxVotes) {
-        maxTargets.add(targetId);
-      }
-    });
-
     String? accusedId;
-    if (maxTargets.length == 1) {
-      accusedId = maxTargets.first;
-    } else {
-      // Tie -> No death (MVP)
+    if (voteCounts.isEmpty) {
+      // No valid votes -> No death
       accusedId = null;
+    } else {
+      // Find max
+      var maxVotes = 0;
+      var maxTargets = <String>[];
+      voteCounts.forEach((targetId, count) {
+        if (count > maxVotes) {
+          maxVotes = count;
+          maxTargets = [targetId];
+        } else if (count == maxVotes) {
+          maxTargets.add(targetId);
+        }
+      });
+
+      if (maxTargets.length == 1) {
+        accusedId = maxTargets.first;
+      } else {
+        // TIE
+        if (_state.voteRound == 1) {
+          // Go to Round 2
+          _state = _state.copyWith(
+            voteRound: 2,
+            voteCandidates: maxTargets,
+            votes: {},
+          );
+          return; // Stay in Vote phase
+        } else {
+          // Round 2 Tie -> No death
+          accusedId = null;
+        }
+      }
     }
 
-    if (accusedId != null) {
-      _state = _state.copyWith(
-        phase: GamePhase.voteResult,
-        accusedPlayerId: accusedId,
-      );
-    } else {
-      _endDay(null);
-    }
+    // Proceed to Result
+    _state = _state.copyWith(
+      phase: GamePhase.voteResult,
+      accusedPlayerId: accusedId,
+    );
   }
 
   void _endDay(String? eliminatedId) {
@@ -357,6 +383,7 @@ class GameController {
       resetSeerRevealedId: true,
       resetWerewolfHuntTargetId: true,
       resetAccusedPlayerId: true,
+      resetVoteCandidates: true,
     );
 
     // Check if Werewolf exists/is alive, otherwise skip

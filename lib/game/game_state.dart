@@ -58,6 +58,8 @@ class GameState {
   final String? werewolfHuntTargetId;
   final List<String> dyingPlayerIds;
   final List<String> lastNightDeadIds;
+  final int voteRound;
+  final List<String>? voteCandidates;
 
   const GameState({
     this.phase = GamePhase.lobby,
@@ -73,6 +75,8 @@ class GameState {
     this.werewolfHuntTargetId,
     this.dyingPlayerIds = const [],
     this.lastNightDeadIds = const [],
+    this.voteRound = 1,
+    this.voteCandidates,
   });
 
   factory GameState.fromJson(Map<String, dynamic> json) =>
@@ -93,10 +97,13 @@ class GameState {
     String? werewolfHuntTargetId,
     List<String>? dyingPlayerIds,
     List<String>? lastNightDeadIds,
+    int? voteRound,
+    List<String>? voteCandidates,
     // Reset flags
     bool resetSeerRevealedId = false,
     bool resetAccusedPlayerId = false,
     bool resetWerewolfHuntTargetId = false,
+    bool resetVoteCandidates = false,
   }) {
     return GameState(
       phase: phase ?? this.phase,
@@ -117,6 +124,9 @@ class GameState {
           : (werewolfHuntTargetId ?? this.werewolfHuntTargetId),
       dyingPlayerIds: dyingPlayerIds ?? this.dyingPlayerIds,
       lastNightDeadIds: lastNightDeadIds ?? this.lastNightDeadIds,
+      voteRound: voteRound ?? this.voteRound,
+      voteCandidates:
+          resetVoteCandidates ? null : (voteCandidates ?? this.voteCandidates),
     );
   }
 }
