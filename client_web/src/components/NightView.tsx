@@ -141,6 +141,17 @@ function WitchAction({ players, dyingIds, hasLife, hasDeath, onAction }: { playe
     const victim = players.find(p => dyingIds.includes(p.id));
 
     if (step === 'life') {
+        if (!hasLife) {
+            return (
+                <div className="text-center space-y-4">
+                    <p className="text-slate-500 italic text-lg">
+                        Potion déjà utilisée. <br /> Pas d'info victime.
+                    </p>
+                    <Button onClick={() => setStep('death')}>Continuer</Button>
+                </div>
+            )
+        }
+
         return (
             <div className="space-y-6 text-center">
                 {victim ? (
