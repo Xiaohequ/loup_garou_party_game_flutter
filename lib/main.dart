@@ -8,6 +8,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'server/game_server.dart';
 import 'game/game_state.dart';
+import 'screens/game_player_screen.dart';
 
 void main() {
   runApp(const LoupGarouApp());
@@ -211,6 +212,26 @@ class _HostHomePageState extends State<HostHomePage> {
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text('Reset Game'),
+                      ),
+                    ),
+                  if (_serverAddress.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  GamePlayerScreen(gameUrl: _serverAddress),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Rejoindre (Joueur)'),
                       ),
                     ),
                 ],
