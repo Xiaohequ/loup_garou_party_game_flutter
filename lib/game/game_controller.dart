@@ -196,6 +196,9 @@ class GameController {
       return p;
     }).toList();
 
+    // Check Win Condition at sunrise
+    if (_checkWinCondition(players)) return;
+
     _state = _state.copyWith(
       phase: GamePhase.day,
       players: players,
