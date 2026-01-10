@@ -28,6 +28,21 @@ function App() {
 
     const myPlayer = gameState.players.find(p => p.id === myPlayerId);
 
+
+    // Transition State (Fermer les yeux)
+    if (gameState.isTransitioning) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 text-center z-50 fixed inset-0">
+                <h1 className="text-4xl md:text-6xl font-black mb-8 animate-pulse text-red-600">FERMER LES YEUX</h1>
+                <div className="text-8xl font-bold bg-white/10 rounded-full h-32 w-32 flex items-center justify-center border-4 border-white/20">
+                    {gameState.countdown}
+                </div>
+                <p className="mt-8 text-xl text-slate-400 italic">La nuit continue...</p>
+            </div>
+        );
+    }
+
+
     // Phase: Lobby
     if (gameState.phase === GamePhase.lobby) {
         return <Lobby

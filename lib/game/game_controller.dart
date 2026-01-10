@@ -158,22 +158,74 @@ class GameController {
     switch (_state.subPhase) {
       case NightSubPhase.werewolfTurn:
         _resolveWerewolfVote();
-        _state = _state.copyWith(
-          subPhase: NightSubPhase.seerTurn,
-          resetSeerRevealedId: true,
-        );
-        if (!_isRoleAlive(Role.seer)) _nextNightTurn();
+        startTransition(NightSubPhase.seerTurn);
         break;
       case NightSubPhase.seerTurn:
-        _state = _state.copyWith(subPhase: NightSubPhase.witchTurn);
-        if (!_isRoleAlive(Role.witch)) _nextNightTurn();
+        startTransition(NightSubPhase.witchTurn);
         break;
       case NightSubPhase.witchTurn:
-        _state = _state.copyWith(subPhase: NightSubPhase.none); // End of night
-        _endNight();
+        startTransition(NightSubPhase.none); // End of night
         break;
       default:
         break;
+    }
+  }
+
+  NightSubPhase? _pendingSubPhase;
+
+  void startTransition(NightSubPhase nextSubPhase) {
+    _pendingSubPhase = nextSubPhase;
+    _state = _state.copyWith(
+      isTransitioning: true,
+      countdown: 3,
+    );
+  }
+
+  void tickCountdown() {
+    if (!_state.isTransitioning) return;
+
+    if (_state.countdown > 1) {
+      _state = _state.copyWith(countdown: _state.countdown - 1);
+    } else {
+      _state = _state.copyWith(
+        isTransitioning: false,
+        countdown: 0,
+      );
+      _completeTransition();
+    }
+  }
+
+  void _completeTransition() {
+    final nextSub = _pendingSubPhase;
+    _pendingSubPhase = null;
+
+    if (nextSub == null || nextSub == NightSubPhase.none) {
+      _state = _state.copyWith(subPhase: NightSubPhase.none);
+      _endNight();
+    } else {
+      _state = _state.copyWith(
+        subPhase: nextSub,
+        resetSeerRevealedId: nextSub == NightSubPhase.seerTurn,
+      );
+      // If the role for this subphase is not alive, skip but with another transition?
+      // The user said "à la fin de chaque sous phase", so if it's skipped it might not need a countdown.
+      // But let's check if the role is alive here.
+      if (!_isRoleAliveForSubPhase(nextSub)) {
+        _nextNightTurn();
+      }
+    }
+  }
+
+  bool _isRoleAliveForSubPhase(NightSubPhase subPhase) {
+    switch (subPhase) {
+      case NightSubPhase.werewolfTurn:
+        return _isRoleAlive(Role.werewolf);
+      case NightSubPhase.seerTurn:
+        return _isRoleAlive(Role.seer);
+      case NightSubPhase.witchTurn:
+        return _isRoleAlive(Role.witch);
+      default:
+        return false;
     }
   }
 

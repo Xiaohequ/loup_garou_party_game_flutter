@@ -49,10 +49,15 @@ class _HostHomePageState extends State<HostHomePage> {
   }
 
   Future<void> _initAndStartServer() async {
+    print("_initAndStartServer");
     try {
       final staticPath = await _extractWebAssets();
       _server = GameServer(staticFilesPath: staticPath);
       await _server!.start();
+
+      print("getLocalIp start");
+      final localIp = await GameServer.getLocalIp();
+      print("getLocalIp end");
 
       _server!.stateStream.listen((state) {
         setState(() {
@@ -61,8 +66,7 @@ class _HostHomePageState extends State<HostHomePage> {
       });
 
       setState(() {
-        _serverAddress = "http://${_server!.address}:${_server!.port}";
-        // _serverInfo = 'Server running at\n$_serverAddress\n\nScan to join!';
+        _serverAddress = "http://$localIp:${_server!.port}";
       });
     } catch (e, stack) {
       print(e);
@@ -85,11 +89,29 @@ class _HostHomePageState extends State<HostHomePage> {
     await webDir.create(recursive: true);
 
     // Load AssetManifest to find all files in assets/web/
-    final manifestContent = await rootBundle.loadString('AssetManifest.json');
-    final Map<String, dynamic> manifestMap = json.decode(manifestContent);
-
-    final webAssets =
-        manifestMap.keys.where((key) => key.startsWith('assets/web/')).toList();
+    List<String> webAssets = [];
+    try {
+      final AssetManifest assetManifest =
+          await AssetManifest.loadFromAssetBundle(rootBundle);
+      webAssets = assetManifest
+          .listAssets()
+          .where((key) => key.startsWith('assets/web/'))
+          .toList();
+    } catch (e) {
+      print("Warning: Could not load AssetManifest using official API: $e");
+      // Fallback for older versions or if manifest is missing
+      try {
+        final manifestContent =
+            await rootBundle.loadString('AssetManifest.json');
+        final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+        webAssets = manifestMap.keys
+            .where((key) => key.startsWith('assets/web/'))
+            .toList();
+      } catch (e2) {
+        print("Error: Fallback manifest loading also failed: $e2");
+        rethrow;
+      }
+    }
 
     for (final assetPath in webAssets) {
       // assetPath is like 'assets/web/index.html' or 'assets/web/assets/index.js'
@@ -149,11 +171,10 @@ class _HostHomePageState extends State<HostHomePage> {
                         if (_serverAddress.isNotEmpty)
                           Container(
                             color: Colors.white,
-                            padding: const EdgeInsets.all(8.0),
                             child: QrImageView(
                               data: _serverAddress,
                               version: QrVersions.auto,
-                              size: 200.0,
+                              size: 80.0,
                             ),
                           ),
                         const SizedBox(height: 10),
@@ -165,19 +186,7 @@ class _HostHomePageState extends State<HostHomePage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  if (_serverAddress.isNotEmpty)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: _serverAddress));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Address copied!')),
-                        );
-                      },
-                      icon: const Icon(Icons.copy),
-                      label: const Text('Copy Link'),
-                    ),
-                  const Spacer(),
+                  const Spacer(), 
                   if (_serverAddress.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 10),

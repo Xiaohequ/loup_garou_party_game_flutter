@@ -47,7 +47,10 @@ export interface GameState {
     winner: GameWinner;
     players: Player[];
     turnCount: number;
+    isTransitioning: boolean;
+    countdown: number;
     votes: Record<string, string>; // VoterID -> TargetID
+
     witchUsedLifePotion: boolean;
     witchUsedDeathPotion: boolean;
     seerRevealedId: string | null;

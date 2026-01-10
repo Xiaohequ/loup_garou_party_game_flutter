@@ -12,7 +12,27 @@ import '../game/game_controller.dart';
 import '../game/game_state.dart';
 
 class GameServer {
+  static Future<String> getLocalIp() async {
+    try {
+      final interfaces = await NetworkInterface.list(
+        includeLoopback: false,
+        type: InternetAddressType.IPv4,
+      );
+      for (var interface in interfaces) {
+        for (var addr in interface.addresses) {
+          if (!addr.isLoopback && addr.type == InternetAddressType.IPv4) {
+            return addr.address;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error getting local IP: $e');
+    }
+    return '127.0.0.1';
+  }
+
   HttpServer? _server;
+  Timer? _timer;
   final List<WebSocketChannel> _clients = [];
   final String staticFilesPath;
   final GameController _gameController = GameController();
@@ -66,7 +86,15 @@ class GameServer {
     _server = await shelf_io.serve(handler, InternetAddress.anyIPv4, 8080);
     print(
         'Server listening at http://${_server!.address.host}:${_server!.port}');
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_gameController.state.isTransitioning) {
+        _gameController.tickCountdown();
+        _broadcastState();
+      }
+    });
   }
+
 
   void _handleMessage(WebSocketChannel client, dynamic message) {
     try {
@@ -148,11 +176,22 @@ class GameServer {
   }
 
   Future<void> stop() async {
+    _timer?.cancel();
     await _server?.close();
+
     for (var client in _clients) client.sink.close();
     await _stateController.close();
   }
 
-  String get address => _server?.address.address ?? 'Unknown';
+  String get address {
+    final serverAddr = _server?.address.address;
+    if (serverAddr == '0.0.0.0' || serverAddr == '::') {
+      // Return a placeholder or we will handle this in UI if needed,
+      // but let's try to return the best address here.
+      return 'localhost';
+    }
+    return serverAddr ?? 'Unknown';
+  }
+
   int get port => _server?.port ?? 0;
 }

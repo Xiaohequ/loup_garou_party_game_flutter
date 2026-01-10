@@ -48,6 +48,8 @@ class GameState {
   final GameWinner winner; // Added winner
   final List<Player> players;
   final int turnCount;
+  final bool isTransitioning;
+  final int countdown;
 
   // ... other fields ...
   final Map<String, String> votes;
@@ -67,6 +69,8 @@ class GameState {
     this.winner = GameWinner.none,
     this.players = const [],
     this.turnCount = 0,
+    this.isTransitioning = false,
+    this.countdown = 0,
     this.votes = const {},
     this.witchUsedLifePotion = false,
     this.witchUsedDeathPotion = false,
@@ -89,6 +93,8 @@ class GameState {
     GameWinner? winner,
     List<Player>? players,
     int? turnCount,
+    bool? isTransitioning,
+    int? countdown,
     Map<String, String>? votes,
     bool? witchUsedLifePotion,
     bool? witchUsedDeathPotion,
@@ -111,6 +117,8 @@ class GameState {
       winner: winner ?? this.winner,
       players: players ?? this.players,
       turnCount: turnCount ?? this.turnCount,
+      isTransitioning: isTransitioning ?? this.isTransitioning,
+      countdown: countdown ?? this.countdown,
       votes: votes ?? this.votes,
       witchUsedLifePotion: witchUsedLifePotion ?? this.witchUsedLifePotion,
       witchUsedDeathPotion: witchUsedDeathPotion ?? this.witchUsedDeathPotion,

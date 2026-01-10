@@ -18,6 +18,8 @@ GameState _$GameStateFromJson(Map<String, dynamic> json) => GameState(
               .toList() ??
           const [],
       turnCount: (json['turnCount'] as num?)?.toInt() ?? 0,
+      isTransitioning: json['isTransitioning'] as bool? ?? false,
+      countdown: (json['countdown'] as num?)?.toInt() ?? 0,
       votes: (json['votes'] as Map<String, dynamic>?)?.map(
             (k, e) => MapEntry(k, e as String),
           ) ??
@@ -47,6 +49,8 @@ Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
       'winner': _$GameWinnerEnumMap[instance.winner]!,
       'players': instance.players.map((e) => e.toJson()).toList(),
       'turnCount': instance.turnCount,
+      'isTransitioning': instance.isTransitioning,
+      'countdown': instance.countdown,
       'votes': instance.votes,
       'witchUsedLifePotion': instance.witchUsedLifePotion,
       'witchUsedDeathPotion': instance.witchUsedDeathPotion,
