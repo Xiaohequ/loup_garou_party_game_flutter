@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
 
 import 'server/game_server.dart';
 import 'game/game_state.dart';
@@ -41,6 +43,8 @@ class _HostHomePageState extends State<HostHomePage> {
   GameServer? _server;
   String _serverAddress = '';
   GameState? _currentState;
+  WebViewController? _hostPlayerController;
+
 
   @override
   void initState() {
@@ -68,6 +72,13 @@ class _HostHomePageState extends State<HostHomePage> {
       setState(() {
         _serverAddress = "http://$localIp:${_server!.port}";
       });
+
+      // Initialize host player controller
+      _hostPlayerController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setBackgroundColor(const Color(0x00000000))
+        ..loadRequest(Uri.parse(_serverAddress));
+
     } catch (e, stack) {
       print(e);
       print(stack);
@@ -234,10 +245,13 @@ class _HostHomePageState extends State<HostHomePage> {
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  GamePlayerScreen(gameUrl: _serverAddress),
+                              builder: (context) => GamePlayerScreen(
+                                gameUrl: _serverAddress,
+                                controller: _hostPlayerController,
+                              ),
                             ),
                           );
+
                         },
                         icon: const Icon(Icons.play_arrow),
                         label: const Text('Rejoindre (Joueur)'),
