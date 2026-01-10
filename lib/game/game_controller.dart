@@ -158,13 +158,22 @@ class GameController {
     switch (_state.subPhase) {
       case NightSubPhase.werewolfTurn:
         _resolveWerewolfVote();
-        startTransition(NightSubPhase.seerTurn);
+        startTransition(
+          NightSubPhase.seerTurn,
+          _getPlayersForSubPhase(NightSubPhase.werewolfTurn),
+        );
         break;
       case NightSubPhase.seerTurn:
-        startTransition(NightSubPhase.witchTurn);
+        startTransition(
+          NightSubPhase.witchTurn,
+          _getPlayersForSubPhase(NightSubPhase.seerTurn),
+        );
         break;
       case NightSubPhase.witchTurn:
-        startTransition(NightSubPhase.none); // End of night
+        startTransition(
+          NightSubPhase.none,
+          _getPlayersForSubPhase(NightSubPhase.witchTurn),
+        ); // End of night
         break;
       default:
         break;
@@ -173,12 +182,35 @@ class GameController {
 
   NightSubPhase? _pendingSubPhase;
 
-  void startTransition(NightSubPhase nextSubPhase) {
+  void startTransition(NightSubPhase nextSubPhase, List<String> playerIds) {
     _pendingSubPhase = nextSubPhase;
     _state = _state.copyWith(
       isTransitioning: true,
+      transitioningPlayerIds: playerIds,
       countdown: 3,
     );
+  }
+
+  List<String> _getPlayersForSubPhase(NightSubPhase subPhase) {
+    switch (subPhase) {
+      case NightSubPhase.werewolfTurn:
+        return _state.players
+            .where((p) => p.isAlive && p.role == Role.werewolf)
+            .map((p) => p.id)
+            .toList();
+      case NightSubPhase.seerTurn:
+        return _state.players
+            .where((p) => p.isAlive && p.role == Role.seer)
+            .map((p) => p.id)
+            .toList();
+      case NightSubPhase.witchTurn:
+        return _state.players
+            .where((p) => p.isAlive && p.role == Role.witch)
+            .map((p) => p.id)
+            .toList();
+      default:
+        return [];
+    }
   }
 
   void tickCountdown() {
@@ -189,6 +221,7 @@ class GameController {
     } else {
       _state = _state.copyWith(
         isTransitioning: false,
+        transitioningPlayerIds: [],
         countdown: 0,
       );
       _completeTransition();
@@ -485,8 +518,7 @@ class GameController {
       votes: {},
       dyingPlayerIds: [],
       accusedPlayerId: null,
-      // Start of new night
-      subPhase: NightSubPhase.werewolfTurn, // Order: Wolf -> Seer -> Witch
+      subPhase: NightSubPhase.none, // Transition will set this
       turnCount: _state.turnCount + 1,
       resetSeerRevealedId: true,
       resetWerewolfHuntTargetId: true,
@@ -494,10 +526,9 @@ class GameController {
       resetVoteCandidates: true,
     );
 
-    // Check if Werewolf exists/is alive, otherwise skip
-    if (!_isRoleAlive(Role.werewolf)) {
-      _nextNightTurn();
-    }
+    // Trigger transition for everyone alive at the start of the night
+    final aliveIds = players.where((p) => p.isAlive).map((p) => p.id).toList();
+    startTransition(NightSubPhase.werewolfTurn, aliveIds);
   }
 
   bool _checkWinCondition(List<Player> players) {

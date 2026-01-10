@@ -19,6 +19,10 @@ GameState _$GameStateFromJson(Map<String, dynamic> json) => GameState(
           const [],
       turnCount: (json['turnCount'] as num?)?.toInt() ?? 0,
       isTransitioning: json['isTransitioning'] as bool? ?? false,
+      transitioningPlayerIds: (json['transitioningPlayerIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       countdown: (json['countdown'] as num?)?.toInt() ?? 0,
       votes: (json['votes'] as Map<String, dynamic>?)?.map(
             (k, e) => MapEntry(k, e as String),
@@ -50,6 +54,7 @@ Map<String, dynamic> _$GameStateToJson(GameState instance) => <String, dynamic>{
       'players': instance.players.map((e) => e.toJson()).toList(),
       'turnCount': instance.turnCount,
       'isTransitioning': instance.isTransitioning,
+      'transitioningPlayerIds': instance.transitioningPlayerIds,
       'countdown': instance.countdown,
       'votes': instance.votes,
       'witchUsedLifePotion': instance.witchUsedLifePotion,

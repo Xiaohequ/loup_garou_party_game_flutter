@@ -30,7 +30,12 @@ function App() {
 
 
     // Transition State (Fermer les yeux)
-    if (gameState.isTransitioning) {
+    const shouldShowTransition =
+        gameState.isTransitioning &&
+        myPlayerId &&
+        gameState.transitioningPlayerIds.includes(myPlayerId);
+
+    if (shouldShowTransition) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4 text-center z-50 fixed inset-0">
                 <h1 className="text-4xl md:text-6xl font-black mb-8 animate-pulse text-red-600">FERMER LES YEUX</h1>

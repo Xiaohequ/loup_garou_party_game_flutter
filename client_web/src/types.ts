@@ -48,8 +48,10 @@ export interface GameState {
     players: Player[];
     turnCount: number;
     isTransitioning: boolean;
+    transitioningPlayerIds: string[];
     countdown: number;
     votes: Record<string, string>; // VoterID -> TargetID
+
 
     witchUsedLifePotion: boolean;
     witchUsedDeathPotion: boolean;

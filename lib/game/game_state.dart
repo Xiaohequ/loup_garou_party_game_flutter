@@ -49,6 +49,7 @@ class GameState {
   final List<Player> players;
   final int turnCount;
   final bool isTransitioning;
+  final List<String> transitioningPlayerIds;
   final int countdown;
 
   // ... other fields ...
@@ -70,6 +71,7 @@ class GameState {
     this.players = const [],
     this.turnCount = 0,
     this.isTransitioning = false,
+    this.transitioningPlayerIds = const [],
     this.countdown = 0,
     this.votes = const {},
     this.witchUsedLifePotion = false,
@@ -94,6 +96,7 @@ class GameState {
     List<Player>? players,
     int? turnCount,
     bool? isTransitioning,
+    List<String>? transitioningPlayerIds,
     int? countdown,
     Map<String, String>? votes,
     bool? witchUsedLifePotion,
@@ -118,6 +121,8 @@ class GameState {
       players: players ?? this.players,
       turnCount: turnCount ?? this.turnCount,
       isTransitioning: isTransitioning ?? this.isTransitioning,
+      transitioningPlayerIds:
+          transitioningPlayerIds ?? this.transitioningPlayerIds,
       countdown: countdown ?? this.countdown,
       votes: votes ?? this.votes,
       witchUsedLifePotion: witchUsedLifePotion ?? this.witchUsedLifePotion,
