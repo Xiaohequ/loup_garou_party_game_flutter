@@ -34,6 +34,7 @@ class GameServer {
   HttpServer? _server;
   Timer? _timer;
   final List<WebSocketChannel> _clients = [];
+  final Map<String, WebSocketChannel> _playerChannels = {};
   final String staticFilesPath;
   final GameController _gameController = GameController();
 
@@ -53,11 +54,13 @@ class GameServer {
         },
         onDone: () {
           _clients.remove(webSocket);
+          _playerChannels.removeWhere((id, ws) => ws == webSocket);
           print('Connection closed');
         },
         onError: (e) {
           print("WS Error: $e");
           _clients.remove(webSocket);
+          _playerChannels.removeWhere((id, ws) => ws == webSocket);
         },
       );
     });
@@ -108,6 +111,7 @@ class GameServer {
         case 'JOIN':
           final newPlayer = _gameController.addPlayer(payload['name']);
           if (newPlayer != null) {
+            _playerChannels[newPlayer.id] = client;
             client.sink.add(jsonEncode({
               'type': 'PLAYER_INFO',
               'payload': {
@@ -172,6 +176,16 @@ class GameServer {
 
   void killPlayer(String playerId) {
     _gameController.killPlayer(playerId);
+    _broadcastState();
+  }
+
+  void kickPlayer(String playerId) {
+    _gameController.removePlayer(playerId);
+    final channel = _playerChannels.remove(playerId);
+    if (channel != null) {
+      channel.sink.close();
+      _clients.remove(channel);
+    }
     _broadcastState();
   }
 

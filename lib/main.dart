@@ -311,25 +311,38 @@ class _HostHomePageState extends State<HostHomePage> {
                                       (_currentState!.phase == GamePhase.vote
                                           ? " | Votes: $votesReceived"
                                           : "")),
-                              trailing: player.isAlive
-                                  ? PopupMenuButton<String>(
-                                      onSelected: (value) {
-                                        if (value == 'kill') {
-                                          _server?.killPlayer(player.id);
-                                        }
-                                      },
-                                      itemBuilder: (context) => [
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (!player.isAlive)
+                                    const Text("DEAD",
+                                        style: TextStyle(
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold)),
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value == 'kill') {
+                                        _server?.killPlayer(player.id);
+                                      } else if (value == 'kick') {
+                                        _server?.kickPlayer(player.id);
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      if (player.isAlive)
                                         const PopupMenuItem(
                                           value: 'kill',
                                           child: Text('Kill Player'),
                                         ),
-                                      ],
-                                      icon: const Icon(Icons.more_vert),
-                                    )
-                                  : const Text("DEAD",
-                                      style: TextStyle(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.bold)),
+                                      const PopupMenuItem(
+                                        value: 'kick',
+                                        child: Text('Kick Player',
+                                            style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
+                                    icon: const Icon(Icons.more_vert),
+                                  ),
+                                ],
+                              ),
                             );
                           },
                         ),

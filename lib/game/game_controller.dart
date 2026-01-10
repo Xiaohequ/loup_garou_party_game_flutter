@@ -587,4 +587,10 @@ class GameController {
     // Trigger win check in case this kill ends the game
     _checkWinCondition(_state.players);
   }
+
+  void removePlayer(String playerId) {
+    _state = _state.copyWith(
+      players: _state.players.where((p) => p.id != playerId).toList(),
+    );
+  }
 }
