@@ -136,7 +136,7 @@ class GameController {
     _resetReady();
     _state = _state.copyWith(
       phase: GamePhase.night,
-      subPhase: NightSubPhase.werewolfTurn, // Werewolves go first now
+      subPhase: NightSubPhase.none, // Transition will set this
       votes: {},
       dyingPlayerIds: [],
       lastNightDeadIds: [],
@@ -144,10 +144,10 @@ class GameController {
       resetSeerRevealedId: true,
       resetWerewolfHuntTargetId: true,
     );
-    // Check if Werewolf exists/is alive, otherwise skip
-    if (!_isRoleAlive(Role.werewolf)) {
-      _nextNightTurn();
-    }
+
+    final aliveIds =
+        _state.players.where((p) => p.isAlive).map((p) => p.id).toList();
+    startTransition(NightSubPhase.werewolfTurn, aliveIds);
   }
 
   bool _isRoleAlive(Role role) {
